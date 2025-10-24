@@ -57,9 +57,6 @@ var host = new HostBuilder()
         // API clients
         services.AddSingleton<TbaApiClient>();
         services.AddSingleton<NexusApiClient>();
-
-        // TBA Service
-        services.AddSingleton<TBAService>();
     })
     .Build();
 
