@@ -1,7 +1,7 @@
-using bearnet.Models.TBA;
+using Bearnet.Models.TBA;
 using Microsoft.Extensions.Logging;
 
-namespace bearnet.Services;
+namespace Bearnet.Services;
 
 public class TBAService {
     private readonly TbaApiClient _api;

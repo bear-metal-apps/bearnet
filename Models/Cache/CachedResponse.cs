@@ -1,7 +1,7 @@
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 
-namespace bearnet.Models.Cache;
+namespace Bearnet.Models.Cache;
 
 public class CachedResponse {
     [BsonId]

@@ -1,9 +1,9 @@
-using bearnet.GraphQL;
-using bearnet.Models.TBA;
-using bearnet.Services;
+using Bearnet.GraphQL;
+using Bearnet.Models.TBA;
+using Bearnet.Services;
 using Microsoft.Extensions.Hosting;
 using MongoDB.Driver;
-using bearnet.Models.Cache;
+using Bearnet.Models.Cache;
 
 
 var host = new HostBuilder()

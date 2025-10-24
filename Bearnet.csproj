@@ -11,7 +11,7 @@
         <Using Include="System.Threading.ExecutionContext" Alias="ExecutionContext"/>
         <Using Include="Microsoft.Azure.Functions.Extensions.DependencyInjection"/>
         <Using Include="Microsoft.Extensions.DependencyInjection"/>
-        <Using Include="bearnet"/>
+        <Using Include="Bearnet"/>
     </ItemGroup>
 
     <ItemGroup>

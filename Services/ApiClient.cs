@@ -1,10 +1,10 @@
 using System.Net;
 using System.Text.Json;
-using bearnet.Models.Cache;
+using Bearnet.Models.Cache;
 using Microsoft.Extensions.Logging;
 using MongoDB.Driver;
 
-namespace bearnet.Services;
+namespace Bearnet.Services;
 
 public interface IApiClient {
     Task<string> GetStringAsync(string endpoint, TimeSpan? ttl = null);

@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace bearnet.Models.TBA;
+namespace Bearnet.Models.TBA;
 
 public class TBAEvent {
     [JsonPropertyName("key")] public string Key { get; set; } = string.Empty;

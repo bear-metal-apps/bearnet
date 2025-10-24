@@ -1,4 +1,4 @@
-namespace bearnet;
+namespace Bearnet;
 
 using HotChocolate.AzureFunctions;
 using Microsoft.Azure.Functions.Worker;

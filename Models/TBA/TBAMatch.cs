@@ -1,4 +1,4 @@
-namespace bearnet.Models.TBA;
+namespace Bearnet.Models.TBA;
 
 using System.Text.Json;
 using System.Text.Json.Serialization;

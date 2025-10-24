@@ -1,6 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "bearnet", "bearnet.csproj", "{6808DEB6-B789-4136-943A-2E10D685F379}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bearnet", "Bearnet.csproj", "{6808DEB6-B789-4136-943A-2E10D685F379}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

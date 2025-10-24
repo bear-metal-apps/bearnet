@@ -1,7 +1,7 @@
-namespace bearnet.GraphQL;
+namespace Bearnet.GraphQL;
 
-using Models.TBA;
-using Services;
+using Bearnet.Models.TBA;
+using Bearnet.Services;
 using HotChocolate;
 
 public class Query {
