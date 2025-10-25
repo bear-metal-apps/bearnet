@@ -1,4 +1,5 @@
 using Bearnet.GraphQL;
+using Bearnet.Models;
 using Bearnet.Models.TBA;
 using Bearnet.Services;
 using Microsoft.Extensions.Hosting;
@@ -10,6 +11,11 @@ var host = new HostBuilder()
     .ConfigureFunctionsWorkerDefaults()
     .AddGraphQLFunction(b => b
         .AddQueryType<Query>()
+        .AddMutationType<Mutation>()
+        .AddType<User>()
+        .AddType<UserPreferences>()
+        .AddType<Theme>()
+        .AddType<Role>()
         .AddType<IScoreBreakdown>()
         .AddType<ScoreBreakdown2015>()
         .AddType<ScoreBreakdown2025>()
@@ -38,6 +44,9 @@ var host = new HostBuilder()
             return database.GetCollection<CachedResponse>("http_cache");
         });
 
+        // User collection
+        services.AddSingleton<UserService>();
+
         services.AddHttpClient("TBA", client => {
             var baseUrl = "https://www.thebluealliance.com/api/v3/";
             var apiKey = config["TBA_API_KEY"] ??
@@ -54,10 +63,14 @@ var host = new HostBuilder()
             client.DefaultRequestHeaders.Add("Nexus-Api-Key", apiKey);
         });
 
-        // API clients
+                // API clients
         services.AddSingleton<TbaApiClient>();
         services.AddSingleton<NexusApiClient>();
+
+        services.AddHttpContextAccessor();
     })
     .Build();
+
+host.Run();
 
 host.Run();
