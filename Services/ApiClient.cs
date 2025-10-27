@@ -77,8 +77,8 @@ public abstract class ApiClientBase : IApiClient {
             // Update cache expiration
             var filter = Builders<CachedResponse>.Filter.Where(x => x.Api == _apiName && x.Endpoint == endpoint);
             var update = Builders<CachedResponse>.Update
-                .Set(x => x.ExpiresAt, now.Add(ttl ?? _defaultTtl))
-                .Set(x => x.LastModified, now);
+                .Set(x => x.ExpiresAt, now.Add(ttl ?? _defaultTtl).DateTime)
+                .Set(x => x.LastModified, now.DateTime);
             await _cache.UpdateOneAsync(filter, update);
             return cachedData.Content;
         }
@@ -94,8 +94,8 @@ public abstract class ApiClientBase : IApiClient {
                 .Set(x => x.Content, content)
                 .Set(x => x.ContentType, response.Content.Headers.ContentType?.MediaType)
                 .Set(x => x.ETag, etag)
-                .Set(x => x.LastModified, now)
-                .Set(x => x.ExpiresAt, now.Add(ttl ?? _defaultTtl));
+                .Set(x => x.LastModified, now.DateTime)
+                .Set(x => x.ExpiresAt, now.Add(ttl ?? _defaultTtl).DateTime);
 
             await _cache.UpdateOneAsync(
                 x => x.Api == _apiName && x.Endpoint == endpoint,
