@@ -36,6 +36,7 @@ public abstract class ApiClientBase : IApiClient {
 
     private async Task CreateIndexesAsync() {
         try {
+            _logger.LogDebug("Creating cache indexes for {Api}", _apiName);
             var indexKeys = Builders<CachedResponse>.IndexKeys
                 .Ascending(x => x.Api)
                 .Ascending(x => x.Endpoint);
@@ -53,6 +54,7 @@ public abstract class ApiClientBase : IApiClient {
                     Background = true
                 })
             );
+            _logger.LogDebug("Cache indexes created successfully for {Api}", _apiName);
         } catch (Exception ex) {
             _logger.LogWarning(ex, "Error creating cache indexes (may already exist)");
         }
@@ -60,20 +62,25 @@ public abstract class ApiClientBase : IApiClient {
 
     public async Task<string> GetStringAsync(string endpoint, TimeSpan? ttl = null) {
         var now = DateTimeOffset.UtcNow;
+        _logger.LogDebug("Checking cache for {Api}:{Endpoint}", _apiName, endpoint);
         var cachedData = await _cache.Find(x => x.Api == _apiName && x.Endpoint == endpoint).FirstOrDefaultAsync();
 
         if (cachedData != null && cachedData.ExpiresAt > now) {
+            _logger.LogDebug("Cache hit for {Api}:{Endpoint}", _apiName, endpoint);
             return cachedData.Content;
         }
 
+        _logger.LogDebug("Cache miss for {Api}:{Endpoint}", _apiName, endpoint);
         var request = new HttpRequestMessage(HttpMethod.Get, endpoint);
         if (!string.IsNullOrEmpty(cachedData?.ETag)) {
             request.Headers.TryAddWithoutValidation("If-None-Match", cachedData.ETag);
         }
 
+        _logger.LogDebug("Making HTTP request to {Endpoint}", endpoint);
         var response = await _httpClient.SendAsync(request);
 
         if (response.StatusCode == HttpStatusCode.NotModified && cachedData != null) {
+            _logger.LogDebug("Using cached data due to NotModified for {Api}:{Endpoint}", _apiName, endpoint);
             // Update cache expiration
             var filter = Builders<CachedResponse>.Filter.Where(x => x.Api == _apiName && x.Endpoint == endpoint);
             var update = Builders<CachedResponse>.Update
@@ -87,7 +94,9 @@ public abstract class ApiClientBase : IApiClient {
         var content = await response.Content.ReadAsStringAsync();
         var etag = response.Headers.ETag?.Tag;
 
+        _logger.LogDebug("Received response with status {StatusCode} for {Endpoint}", response.StatusCode, endpoint);
         if (!string.IsNullOrEmpty(etag)) {
+            _logger.LogDebug("Caching response for {Api}:{Endpoint}", _apiName, endpoint);
             var cacheUpdate = Builders<CachedResponse>.Update
                 .Set(x => x.Api, _apiName)
                 .Set(x => x.Endpoint, endpoint)
@@ -108,6 +117,7 @@ public abstract class ApiClientBase : IApiClient {
 
     public async Task<T> GetAsync<T>(string endpoint, TimeSpan? ttl = null, JsonSerializerOptions? jsonOptions = null) {
         var json = await GetStringAsync(endpoint, ttl);
+        _logger.LogDebug("Deserializing response from {Endpoint} to type {Type}", endpoint, typeof(T).Name);
         return JsonSerializer.Deserialize<T>(json, jsonOptions)
                ?? throw new Exception($"Failed to deserialize response from {endpoint} to type {typeof(T).Name}");
     }

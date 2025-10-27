@@ -70,7 +70,5 @@ var host = new HostBuilder()
         services.AddHttpContextAccessor();
     })
     .Build();
-
-host.Run();
-
+    
 host.Run();
