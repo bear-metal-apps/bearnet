@@ -50,7 +50,7 @@ var host = new HostBuilder()
         services.AddHttpClient("TBA", client => {
             var baseUrl = "https://www.thebluealliance.com/api/v3/";
             var apiKey = config["TBA_API_KEY"] ??
-                         throw new InvalidOperationException("Required API key is not configured.");
+                         throw new InvalidOperationException("TBA key is not configured.");
 
             client.BaseAddress = new Uri(baseUrl);
             client.DefaultRequestHeaders.Add("X-TBA-Auth-Key", apiKey);
@@ -58,17 +58,18 @@ var host = new HostBuilder()
         services.AddHttpClient("Nexus", client => {
             var baseUrl = "https://frc.nexus/api/v1/";
             var apiKey = config["NEXUS_API_KEY"] ??
-                         throw new InvalidOperationException("NEXUS_API_KEY is not configured.");
+                         throw new InvalidOperationException("Nexus key is not configured.");
             client.BaseAddress = new Uri(baseUrl);
             client.DefaultRequestHeaders.Add("Nexus-Api-Key", apiKey);
         });
 
-                // API clients
+        // API clients
         services.AddSingleton<TbaApiClient>();
         services.AddSingleton<NexusApiClient>();
 
         services.AddHttpContextAccessor();
     })
     .Build();
-    
+
 host.Run();
+
