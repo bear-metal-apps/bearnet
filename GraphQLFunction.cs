@@ -15,8 +15,8 @@ public class GraphQLFunction(IGraphQLRequestExecutor executor)
     {
         var apiKeySecret = Environment.GetEnvironmentVariable("API_KEY_SECRET");
 
-        // Read header (e.g. X-API-Key)
-        if (!request.Headers.TryGetValues("X-API-Key", out var values) ||
+        // Read header (e.g. X-Api-Key)
+        if (!request.Headers.TryGetValues("X-Api-Key", out var values) ||
             string.IsNullOrWhiteSpace(apiKeySecret) ||
             values.FirstOrDefault() != apiKeySecret)
         {
