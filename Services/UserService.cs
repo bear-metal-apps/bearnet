@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Bearnet.Models;
 using MongoDB.Driver;
 
@@ -11,7 +12,8 @@ public class UserService {
     }
 
     public async Task<User> GetUserAsync(string id) {
-        return await _users.Find(u => u.Id == id).FirstOrDefaultAsync();
+        var user = await _users.Find(u => u.Id == id).FirstOrDefaultAsync();
+        return user ?? throw new KeyNotFoundException($"User with id '{id}' was not found.");
     }
 
     public async Task CreateUserAsync(User user) {
@@ -19,7 +21,10 @@ public class UserService {
     }
 
     public async Task UpdateUserAsync(string id, User user) {
-        await _users.ReplaceOneAsync(u => u.Id == id, user);
+        var result = await _users.ReplaceOneAsync(u => u.Id == id, user);
+        if (result.MatchedCount == 0) {
+            throw new KeyNotFoundException($"User with id '{id}' was not found.");
+        }
     }
 
     public async Task DeleteUserAsync(string id) {

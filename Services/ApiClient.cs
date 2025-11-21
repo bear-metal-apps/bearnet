@@ -17,6 +17,7 @@ public abstract class ApiClientBase : IApiClient {
     private readonly ILogger _logger;
     private readonly TimeSpan _defaultTtl;
     private readonly string _apiName;
+    private readonly Task _indexInitialization;
 
     protected ApiClientBase(
         string apiName,
@@ -31,7 +32,8 @@ public abstract class ApiClientBase : IApiClient {
         _logger = logger;
         _defaultTtl = defaultTtl ?? TimeSpan.FromMinutes(60);
 
-        CreateIndexesAsync().GetAwaiter().GetResult();
+        // Fire-and-forget index creation so cold starts aren't blocked.
+        _indexInitialization = Task.Run(CreateIndexesAsync);
     }
 
     private async Task CreateIndexesAsync() {
@@ -61,11 +63,14 @@ public abstract class ApiClientBase : IApiClient {
     }
 
     public async Task<string> GetStringAsync(string endpoint, TimeSpan? ttl = null) {
+        await _indexInitialization.ConfigureAwait(false);
+
         var now = DateTimeOffset.UtcNow;
         _logger.LogDebug("Checking cache for {Api}:{Endpoint}", _apiName, endpoint);
         var cachedData = await _cache.Find(x => x.Api == _apiName && x.Endpoint == endpoint).FirstOrDefaultAsync();
+        var effectiveTtl = ttl ?? _defaultTtl;
 
-        if (cachedData != null && cachedData.ExpiresAt > now) {
+        if (cachedData != null && cachedData.ExpiresAt > now.UtcDateTime) {
             _logger.LogDebug("Cache hit for {Api}:{Endpoint}", _apiName, endpoint);
             return cachedData.Content;
         }
@@ -84,8 +89,8 @@ public abstract class ApiClientBase : IApiClient {
             // Update cache expiration
             var filter = Builders<CachedResponse>.Filter.Where(x => x.Api == _apiName && x.Endpoint == endpoint);
             var update = Builders<CachedResponse>.Update
-                .Set(x => x.ExpiresAt, now.Add(ttl ?? _defaultTtl).DateTime)
-                .Set(x => x.LastModified, now.DateTime);
+                .Set(x => x.ExpiresAt, now.Add(effectiveTtl).UtcDateTime)
+                .Set(x => x.LastModified, now.UtcDateTime);
             await _cache.UpdateOneAsync(filter, update);
             return cachedData.Content;
         }
@@ -95,22 +100,20 @@ public abstract class ApiClientBase : IApiClient {
         var etag = response.Headers.ETag?.Tag;
 
         _logger.LogDebug("Received response with status {StatusCode} for {Endpoint}", response.StatusCode, endpoint);
-        if (!string.IsNullOrEmpty(etag)) {
-            _logger.LogDebug("Caching response for {Api}:{Endpoint}", _apiName, endpoint);
-            var cacheUpdate = Builders<CachedResponse>.Update
-                .Set(x => x.Api, _apiName)
-                .Set(x => x.Endpoint, endpoint)
-                .Set(x => x.Content, content)
-                .Set(x => x.ContentType, response.Content.Headers.ContentType?.MediaType)
-                .Set(x => x.ETag, etag)
-                .Set(x => x.LastModified, now.DateTime)
-                .Set(x => x.ExpiresAt, now.Add(ttl ?? _defaultTtl).DateTime);
+        _logger.LogDebug("Caching response for {Api}:{Endpoint}", _apiName, endpoint);
+        var cacheUpdate = Builders<CachedResponse>.Update
+            .Set(x => x.Api, _apiName)
+            .Set(x => x.Endpoint, endpoint)
+            .Set(x => x.Content, content)
+            .Set(x => x.ContentType, response.Content.Headers.ContentType?.MediaType)
+            .Set(x => x.ETag, etag)
+            .Set(x => x.LastModified, now.UtcDateTime)
+            .Set(x => x.ExpiresAt, now.Add(effectiveTtl).UtcDateTime);
 
-            await _cache.UpdateOneAsync(
-                x => x.Api == _apiName && x.Endpoint == endpoint,
-                cacheUpdate,
-                new UpdateOptions { IsUpsert = true });
-        }
+        await _cache.UpdateOneAsync(
+            x => x.Api == _apiName && x.Endpoint == endpoint,
+            cacheUpdate,
+            new UpdateOptions { IsUpsert = true });
 
         return content;
     }
